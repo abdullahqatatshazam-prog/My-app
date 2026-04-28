@@ -1,1 +1,165 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite Pro - Productivity App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans Arabic', 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-in { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-20">
+
+    <!-- App Header -->
+    <header class="bg-blue-600 text-white p-6 rounded-b-[2rem] shadow-lg mb-6">
+        <h1 class="text-2xl font-bold">إليت برو</h1>
+        <p class="opacity-80 text-sm">أهلاً عبد الله، لننجز مهامنا اليوم!</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="px-4 max-w-md mx-auto">
+        
+        <!-- Tab: Tasks (Default) -->
+        <section id="tasks" class="tab-content active animate-in">
+            <div class="glass p-5 rounded-2xl shadow-sm mb-4">
+                <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span>📝</span> قائمة المهام
+                </h2>
+                <div class="flex gap-2 mb-4">
+                    <input id="taskInput" type="text" placeholder="أضف مهمة جديدة..." class="flex-1 p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button onclick="addTask()" class="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700">إضافة</button>
+                </div>
+                <ul id="taskList" class="space-y-3"></ul>
+            </div>
+        </section>
+
+        <!-- Tab: Timer -->
+        <section id="timer" class="tab-content animate-in text-center">
+            <div class="glass p-8 rounded-2xl shadow-sm">
+                <h2 class="text-lg font-bold mb-6">⏱️ مؤقت التركيز (Pomodoro)</h2>
+                <div class="text-6xl font-mono font-bold text-blue-600 mb-6" id="timerDisplay">25:00</div>
+                <div class="flex justify-center gap-4">
+                    <button id="startBtn" onclick="toggleTimer()" class="bg-green-500 text-white px-8 py-3 rounded-xl font-bold">ابدأ</button>
+                    <button onclick="resetTimer()" class="bg-gray-200 text-gray-700 px-8 py-3 rounded-xl font-bold">إعادة</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tab: Notes -->
+        <section id="notes" class="tab-content animate-in">
+            <div class="glass p-5 rounded-2xl shadow-sm">
+                <h2 class="text-lg font-bold mb-4">📓 ملاحظات سريعة</h2>
+                <textarea id="noteArea" oninput="saveNote()" class="w-full h-64 p-4 rounded-xl border-none bg-yellow-50 focus:ring-2 focus:ring-yellow-200 outline-none" placeholder="اكتب أفكارك هنا..."></textarea>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-3 px-6 flex justify-around items-center shadow-2xl">
+        <button onclick="showTab('tasks')" class="flex flex-col items-center text-blue-600">
+            <span class="text-xl">📋</span>
+            <span class="text-[10px] mt-1">المهام</span>
+        </button>
+        <button onclick="showTab('timer')" class="flex flex-col items-center text-gray-400 hover:text-blue-600">
+            <span class="text-xl">⏱️</span>
+            <span class="text-[10px] mt-1">المؤقت</span>
+        </button>
+        <button onclick="showTab('notes')" class="flex flex-col items-center text-gray-400 hover:text-blue-600">
+            <span class="text-xl">📝</span>
+            <span class="text-[10px] mt-1">الملاحظات</span>
+        </button>
+    </nav>
+
+    <script>
+        // Tab Management
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.replace('text-blue-600', 'text-gray-400'));
+            event.currentTarget.classList.replace('text-gray-400', 'text-blue-600');
+        }
+
+        // Task Logic
+        function addTask() {
+            const input = document.getElementById('taskInput');
+            const list = document.getElementById('taskList');
+            if (!input.value) return;
+
+            const li = document.createElement('li');
+            li.className = "flex items-center justify-between p-3 bg-gray-50 rounded-xl animate-in";
+            li.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" class="w-5 h-5 accent-blue-600" onchange="this.parentElement.nextElementSibling.classList.toggle('line-through')">
+                    <span>${input.value}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-red-400">🗑️</button>
+            `;
+            list.appendChild(li);
+            input.value = '';
+        }
+
+        // Timer Logic
+        let timer;
+        let timeLeft = 25 * 60;
+        let isRunning = false;
+
+        function updateDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timerDisplay').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('startBtn');
+            if (isRunning) {
+                clearInterval(timer);
+                btn.innerText = 'استئناف';
+                btn.className = "bg-blue-500 text-white px-8 py-3 rounded-xl font-bold";
+            } else {
+                timer = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateDisplay();
+                    } else {
+                        clearInterval(timer);
+                        alert("انتهى الوقت! خذ استراحة قصيرة.");
+                    }
+                }, 1000);
+                btn.innerText = 'إيقاف';
+                btn.className = "bg-red-500 text-white px-8 py-3 rounded-xl font-bold";
+            }
+            isRunning = !isRunning;
+        }
+
+        function resetTimer() {
+            clearInterval(timer);
+            timeLeft = 25 * 60;
+            isRunning = false;
+            updateDisplay();
+            document.getElementById('startBtn').innerText = 'ابدأ';
+            document.getElementById('startBtn').className = "bg-green-500 text-white px-8 py-3 rounded-xl font-bold";
+        }
+
+        // Notes Logic
+        function saveNote() {
+            localStorage.setItem('userNote', document.getElementById('noteArea').value);
+        }
+
+        window.onload = () => {
+            document.getElementById('noteArea').value = localStorage.getItem('userNote') || '';
+        };
+    </script>
+</body>
+</html>
+
+```
 
